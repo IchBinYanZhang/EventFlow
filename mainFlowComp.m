@@ -7,7 +7,9 @@ addpath('flowHelper');
 addpath('loadData');
 
 baseOutDir = 'output';
-curSeqName = 'S1L1I1.aedat';
+
+% s3L2I1 - 0.5-0.7
+curSeqName = 'S1L2I1.aedat';
 % baseDir = '/Users/tbhunderbird/Daten/TestSets/Weizmann_HumanActions/eventBasedWeizman/weizmannEventCropped';
 % personNum = 1;
 % curSeqName = sprintf('person%02d_bend', personNum);
@@ -39,35 +41,66 @@ y_coords = y_coords - min(y_coords(:)) + 1;
 maxY = max(y_coords(:));
 maxX = max(x_coords(:));
 
-%% Play sequence and 3D plot
+% select a 3D volume, otherwise the memory will be full
+
+switch curSeqName
+    case 'S2L2I1.aedat'
+        tt1 = 0.6; tt2 = 0.7;
+    case 'S3L2I1.aedat'
+        tt1 = 0.1; tt2 = 0.2;
+    case 'S3L1I1.aedat'
+        tt1 = 0.8; tt2 = 0.9;
+    case 'S2L1I1.aedat'
+        tt1 = 0.55; tt2 = 0.65;
+    case 'S1L1I1.aedat'
+        tt1 = 0.08; tt2 = 0.18;
+    case 'S1L2I1.aedat'
+        tt1 = 0.88; tt2 = 0.98;
+    otherwise
+        error('no other option');
+end
+
+
+
+x_coords = x_coords(tt1*length(ts) : tt2*length(ts));
+y_coords = y_coords(tt1*length(ts) : tt2*length(ts));
+on_offs = on_offs(tt1*length(ts) : tt2*length(ts));
+triggers = triggers(tt1*length(ts) : tt2*length(ts));
+ts = ts(tt1*length(ts) : tt2*length(ts));
+
+
+
+
+
+%%% Play sequence and 3D plot
 % %     dtPlot = 0.05E6; % mu s
-dtPlot = 50E3; % mu s
+dtPlot = 5E3; % mu s
 % 
-% figure(10);
-% for curT = 1:dtPlot:ts(end)-dtPlot-1
-%     im = zeros(128, 128, 3);
-%     fromPlot = find(ts > curT, 1, 'first');
-%     toPlot = find(ts > curT + dtPlot, 1, 'first');
-%     for k = fromPlot:toPlot
-%         if on_offs(k)
-%             im(y_coords(k), x_coords(k), 1) = im(y_coords(k), x_coords(k), 1) + (toPlot-k)/(toPlot-fromPlot);
-%         else
-%             im(y_coords(k), x_coords(k), 3) = im(y_coords(k), x_coords(k), 3) + (toPlot-k)/(toPlot-fromPlot);
-%         end
-%     end
-%     imshow(im, 'InitialMagnification', 500);
-% %     ylim([35, 119]);
-%     title(sprintf('%s t=%4.2fs', curSeqName, curT*1E-6), 'Interpreter', 'none');
-%     drawnow; %pause;
-% end
-% 
-% onInds = logical(on_offs == 1);
-% offInds = logical(on_offs == 0);
-% 
-% figure(20);
-% plot3(x_coords(onInds), ts(onInds), -y_coords(onInds), '.r', ...
-%     x_coords(offInds), ts(offInds), -y_coords(offInds), '.b')
-% xlabel('x'); ylabel('t'); zlabel('y');
+figure(10);
+for curT = ts(1):dtPlot:ts(end)-dtPlot-1
+    im = zeros(180, 240, 3);
+    fromPlot = find(ts > curT, 1, 'first');
+    toPlot = find(ts > curT + dtPlot, 1, 'first');
+    for k = fromPlot:toPlot
+        if on_offs(k)
+            im(y_coords(k), x_coords(k), 1) = im(y_coords(k), x_coords(k), 1) + (toPlot-k)/(toPlot-fromPlot);
+        else
+            im(y_coords(k), x_coords(k), 3) = im(y_coords(k), x_coords(k), 3) + (toPlot-k)/(toPlot-fromPlot);
+        end
+    end
+    imshow(im, 'InitialMagnification', 500);
+%     ylim([35, 119]);
+    title(sprintf('%s t=%4.2fs', curSeqName, curT*1E-6), 'Interpreter', 'none');
+    drawnow; %pause;
+end
+
+onInds = logical(on_offs == 1);
+offInds = logical(on_offs == 0);
+
+figure(20);
+plot3(x_coords(onInds), ts(onInds), -y_coords(onInds), '.r', ...
+    x_coords(offInds), ts(offInds), -y_coords(offInds), '.b')
+xlabel('x'); ylabel('t'); zlabel('y');
 % ylim([1E6, 3E6]);
 
 %% Parameters

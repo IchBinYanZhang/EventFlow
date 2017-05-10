@@ -12,19 +12,28 @@ end
 outputFilepath = [filepath(1:extensionPosition), 'mat'];
 
 % load AER file
-[address, time] = loadaerdat(filepath, 10000);
+[address, time] = loadaerdat(filepath, 1e7);
+
+% select dvs data and ignore aps data
+addressb = de2bi(address);
+ll = addressb(:,end);
+idxx = find(ll==0);
+address = address(idxx);
+time = time(idxx);
+
+
 
 % extract positions and polarity 
 if strcmp(class(address), 'uint32')
   % same as for 16 bit addresses? No!
     % x is the 7 bits from position 8 to 1
-    x = uint8( bitand(bitshift(address, -1), hex2dec('7f')) );
+    x = uint16( bitand(bitshift(address, -12), hex2dec('ff')) );
     % y is the 7 bits starting from position 9
-    y = uint8( bitand(bitshift(address, -8), hex2dec('7f')) );
+    y = uint16( bitand(bitshift(address, -22), hex2dec('ff')) );
     % polarity is the last bit 
-    polarity = uint8( 1 - bitand(address, 1) );
+    polarity = uint8( bitand(address, 2^11) );
     % triggers are marked by bit 15
-    triggers = (bitand(address, hex2dec('8000')) ~= 0);
+    triggers = uint8( bitand(address, 2^10) );
 elseif strcmp(class(address), 'uint16')
     % x is the 7 bits from position 8 to 1
     x = uint8( bitand(bitshift(address, -1), hex2dec('7f')) );
@@ -44,8 +53,8 @@ end
 % res.values = {x, y, polarity, time, triggers};
 % save(outputFilepath, '-struct', 'res');
 x = double(x');
-y = double(128-y');
-polarity = double(polarity');
+y = double(180-y');
+polarity = double(polarity')/255;
 time = double(time');
 
 end
